@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Exquisito Fast Food · Menú</title>
-<meta name="description" content="Menú de Exquisito Fast Food: hamburguesas, perros, salchipapas y alitas.">
+<meta name="description" content="Menú de Exquisito Fast Food: hamburguesas, perros, suizos y salchipapas.">
 <meta name="theme-color" content="#161412">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,22 +83,13 @@ const MENU = [
     ]
   },
   {
-    categoria: "Alitas",
-    productos: [
-      { nombre: "Alitas x 6", descripcion: "Seis alitas en salsa BBQ, búfalo o miel mostaza, con papas.", precio: 18000, etiqueta: "", foto: "" },
-      { nombre: "Alitas x 12", descripcion: "Doce alitas en dos salsas a elección, con papas.", precio: 32000, etiqueta: "", foto: "" }
-    ]
-  },
-  {
     categoria: "Adiciones",
     compacta: true,
     productos: [
       { nombre: "Queso extra", precio: 2000 },
       { nombre: "Tocineta", precio: 3000 },
-      { nombre: "Huevo frito", precio: 2000 },
       { nombre: "Carne extra 150 g", precio: 6000 },
-      { nombre: "Porción de papas", precio: 5000 },
-      { nombre: "Salsa extra", precio: 1000 }
+      { nombre: "Porción de papas", precio: 5000 }
     ]
   },
   {
@@ -106,7 +97,6 @@ const MENU = [
     productos: [
       { nombre: "Gaseosa personal", descripcion: "350 ml. Pregunta por los sabores disponibles.", precio: 3500, etiqueta: "", foto: "" },
       { nombre: "Gaseosa 1,5 L", descripcion: "Ideal para compartir.", precio: 7000, etiqueta: "", foto: "" },
-      { nombre: "Jugo natural", descripcion: "En agua o en leche: mora, lulo, maracuyá o mango.", precio: 6000, etiqueta: "", foto: "" },
       { nombre: "Agua", descripcion: "Botella de 600 ml.", precio: 3000, etiqueta: "", foto: "" }
     ]
   }
@@ -120,7 +110,7 @@ const MENU = [
 const PROMOS = {
   0: null,
   1: null,
-  2: { titulo: "Martes de alitas", descripcion: "Pide alitas x 12 y llévate una gaseosa de 1,5 L gratis.", precio: 32000 },
+  2: null,
   3: null,
   4: { titulo: "Jueves de combos", descripcion: "Combo Pareja con porción extra de papas.", precio: 45000 },
   5: null,
