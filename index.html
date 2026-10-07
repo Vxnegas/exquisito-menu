@@ -453,6 +453,11 @@ body.con-barra-pedido main { padding-bottom: 88px; }
   height: 40px; padding: 0 4px; border: 0; background: none;
   font-size: 14px; color: var(--gris); text-decoration: underline; text-underline-offset: 3px;
 }
+.btn-nota {
+  min-height: 44px; padding: 0; border: 0; background: none;
+  font-size: 15px; font-weight: 600; color: var(--tinta); text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-nota small { font-weight: 400; color: var(--gris); }
 .vacio { text-align: center; padding: 28px 0 8px; color: var(--gris); }
 
 .opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -594,14 +599,18 @@ body.con-barra-pedido main { padding-bottom: 88px; }
       <div id="bloqueDomicilio" hidden>
         <div class="campo" id="cDireccion">
           <label for="fDireccion">Dirección y barrio</label>
-          <input id="fDireccion" type="text" autocomplete="street-address" placeholder="Ej. Calle 5 # 8-20, barrio El Centro">
+          <input id="fDireccion" type="text" autocomplete="street-address" placeholder="Ej. Calle 5 # 8-20, El Centro, casa blanca">
           <div class="error-msg">Escribe la dirección y el barrio.</div>
         </div>
-        <div class="campo">
-          <label for="fReferencia">Referencia <small>(opcional)</small></label>
-          <input id="fReferencia" type="text" placeholder="Ej. casa de rejas blancas, frente a la tienda">
-        </div>
         <div class="alerta" id="alertaMinimo" hidden></div>
+      </div>
+    </div>
+
+    <div class="bloque">
+      <div class="campo" id="cNombre">
+        <label for="fNombre">Tu nombre</label>
+        <input id="fNombre" type="text" autocomplete="name" placeholder="Ej. Ana">
+        <div class="error-msg">Escribe tu nombre.</div>
       </div>
     </div>
 
@@ -610,26 +619,16 @@ body.con-barra-pedido main { padding-bottom: 88px; }
       <div class="opciones tres" id="opcPago"></div>
       <div class="campo error-solo" id="errPago"><div class="error-msg">Elige la forma de pago.</div></div>
       <div class="campo" id="cPagaCon" hidden>
-        <label for="fPagaCon">¿Con cuánto vas a pagar?</label>
+        <label for="fPagaCon">¿Con cuánto pagas? <small>(opcional, para llevarte el cambio)</small></label>
         <input id="fPagaCon" type="text" inputmode="numeric" placeholder="Ej. 50.000">
-        <div class="error-msg" id="errPagaCon">Escribe con cuánto vas a pagar.</div>
+        <div class="error-msg" id="errPagaCon"></div>
       </div>
     </div>
 
     <div class="bloque">
-      <h3>Tus datos</h3>
-      <div class="campo" id="cNombre">
-        <label for="fNombre">Nombre</label>
-        <input id="fNombre" type="text" autocomplete="name" placeholder="Tu nombre">
-        <div class="error-msg">Escribe tu nombre.</div>
-      </div>
-      <div class="campo" id="cTelefono">
-        <label for="fTelefono">Teléfono</label>
-        <input id="fTelefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 300 123 4567">
-        <div class="error-msg">Escribe un teléfono válido.</div>
-      </div>
-      <div class="campo">
-        <label for="fNotas">Notas <small>(opcional)</small></label>
+      <button type="button" class="btn-nota" id="btnNota">+ Agregar una nota <small>(ej. sin cebolla)</small></button>
+      <div class="campo" id="cNotas" hidden>
+        <label for="fNotas">Nota <small>(opcional)</small></label>
         <textarea id="fNotas" placeholder="Ej. sin cebolla, salsas aparte"></textarea>
       </div>
     </div>
@@ -925,7 +924,7 @@ body.con-barra-pedido main { padding-bottom: 88px; }
   const guardado = leer(LS_PEDIDO);
   const pedido = {
     carrito: {},
-    tipo: guardado.tipo || "",
+    tipo: guardado.tipo || "domicilio",
     pago: guardado.pago || "",
     pagaCon: guardado.pagaCon || "",
     notas: guardado.notas || "",
@@ -934,7 +933,7 @@ body.con-barra-pedido main { padding-bottom: 88px; }
   Object.entries(guardado.carrito || {}).forEach(([k, n]) => {
     if (PRODUCTOS[k] && !PRODUCTOS[k].agotado && n > 0) pedido.carrito[k] = Math.min(99, Math.floor(n));
   });
-  const cliente = Object.assign({ nombre: "", telefono: "", direccion: "", referencia: "" }, leer(LS_CLIENTE));
+  const cliente = Object.assign({ nombre: "", direccion: "" }, leer(LS_CLIENTE));
 
   const persistir = () => {
     guardar(LS_PEDIDO, pedido);
@@ -1036,8 +1035,7 @@ body.con-barra-pedido main { padding-bottom: 88px; }
 
   /* ----- Campos: valores guardados ----- */
   const campos = {
-    fNombre: [cliente, "nombre"], fTelefono: [cliente, "telefono"],
-    fDireccion: [cliente, "direccion"], fReferencia: [cliente, "referencia"],
+    fNombre: [cliente, "nombre"], fDireccion: [cliente, "direccion"],
     fNotas: [pedido, "notas"], fPagaCon: [pedido, "pagaCon"]
   };
   Object.entries(campos).forEach(([id, [fuente, prop]]) => {
@@ -1054,6 +1052,11 @@ body.con-barra-pedido main { padding-bottom: 88px; }
       persistir();
     });
   });
+
+  /* ----- Nota opcional ----- */
+  const mostrarNota = () => { $("btnNota").hidden = true; $("cNotas").hidden = false; };
+  if (pedido.notas.trim()) mostrarNota();
+  $("btnNota").addEventListener("click", () => { mostrarNota(); $("fNotas").focus(); });
 
   /* ----- Hoja del pedido ----- */
   const hoja = $("hoja"), fondo = $("hojaFondo");
@@ -1110,13 +1113,10 @@ body.con-barra-pedido main { padding-bottom: 88px; }
     marcar("errPago", !!pedido.pago);
     if (pedido.pago === "Efectivo") {
       const con = Number(soloDigitos(pedido.pagaCon));
-      $("errPagaCon").textContent = !con ? "Escribe con cuánto vas a pagar."
-        : "Debe ser igual o mayor al total (" + precio(total()) + ").";
-      marcar("cPagaCon", con >= total());
+      $("errPagaCon").textContent = "Debe ser igual o mayor al total (" + precio(total()) + ").";
+      marcar("cPagaCon", !con || con >= total());
     }
     marcar("cNombre", cliente.nombre.trim().length >= 2);
-    const tel = soloDigitos(cliente.telefono).length;
-    marcar("cTelefono", tel >= 7 && tel <= 13);
     if (errores.length) errores[0].scrollIntoView({ behavior: "smooth", block: "center" });
     return !errores.length;
   }
@@ -1125,10 +1125,9 @@ body.con-barra-pedido main { padding-bottom: 88px; }
     const l = [];
     l.push("🍔 NUEVO PEDIDO – " + NEGOCIO.nombre);
     l.push("Nombre: " + cliente.nombre.trim());
-    l.push("Teléfono: " + cliente.telefono.trim());
     l.push("Tipo: " + (pedido.tipo === "domicilio" ? "Domicilio" : "Para recoger"));
     if (pedido.tipo === "domicilio") {
-      l.push("Dirección: " + cliente.direccion.trim() + (cliente.referencia.trim() ? " (referencia: " + cliente.referencia.trim() + ")" : ""));
+      l.push("Dirección: " + cliente.direccion.trim());
     }
     l.push("");
     Object.entries(pedido.carrito).forEach(([k, n]) => {
@@ -1138,7 +1137,8 @@ body.con-barra-pedido main { padding-bottom: 88px; }
     l.push("Subtotal: " + precio(subtotal()));
     if (pedido.tipo === "domicilio") l.push("Domicilio: " + precio(PEDIDOS.costoDomicilio));
     l.push("TOTAL: " + precio(total()));
-    l.push("Pago: " + pedido.pago + (pedido.pago === "Efectivo" ? " (paga con " + precio(Number(soloDigitos(pedido.pagaCon))) + ")" : ""));
+    const con = Number(soloDigitos(pedido.pagaCon));
+    l.push("Pago: " + pedido.pago + (pedido.pago === "Efectivo" && con ? " (paga con " + precio(con) + ")" : ""));
     if (pedido.notas.trim()) l.push("Notas: " + pedido.notas.trim());
     return l.join("\n");
   }
