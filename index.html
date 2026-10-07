@@ -20,7 +20,7 @@ const NEGOCIO = {
   logo: "logo.png",               // vacío ("") = sello con la letra E
   direccion: "CR10 #9B 22- BUENAVISTA, CÓRDOBA. - PARQUE CENTRAL",
   domicilios: "300 248 8405",      
-  horarioTexto: "Todos los días, 5:00 p.m. a 11:00 p.m.",
+  horarioTexto: "Todos los días, 5:00 p.m. a 11:00 p.m. (miércoles desde las 3:00 p.m.)",
   // Horario por día (0 = domingo ... 6 = sábado). null = cerrado ese día.
   // Si cierra después de medianoche, usa p. ej. ["17:00", "01:00"].
   horario: {
@@ -1122,24 +1122,31 @@ body.con-barra-pedido main { padding-bottom: 88px; }
   }
 
   function mensaje() {
+    const linea = "------------------------------";
+    const con = Number(soloDigitos(pedido.pagaCon));
     const l = [];
-    l.push("🍔 NUEVO PEDIDO – " + NEGOCIO.nombre);
-    l.push("Nombre: " + cliente.nombre.trim());
-    l.push("Tipo: " + (pedido.tipo === "domicilio" ? "Domicilio" : "Para recoger"));
-    if (pedido.tipo === "domicilio") {
-      l.push("Dirección: " + cliente.direccion.trim());
-    }
-    l.push("");
+    l.push("*NUEVO PEDIDO*");
+    l.push("_" + NEGOCIO.nombre + "_");
+    l.push(linea);
+    l.push("*Cliente:* " + cliente.nombre.trim());
+    l.push("*Entrega:* " + (pedido.tipo === "domicilio" ? "Domicilio" : "Para recoger"));
+    if (pedido.tipo === "domicilio") l.push("*Dirección:* " + cliente.direccion.trim());
+    l.push(linea);
+    l.push("*PRODUCTOS*");
     Object.entries(pedido.carrito).forEach(([k, n]) => {
-      l.push("• " + n + " x " + PRODUCTOS[k].nombre + " – " + precio(PRODUCTOS[k].precio * n));
+      l.push(n + " x " + PRODUCTOS[k].nombre + "  →  " + precio(PRODUCTOS[k].precio * n));
     });
-    l.push("");
+    l.push(linea);
     l.push("Subtotal: " + precio(subtotal()));
     if (pedido.tipo === "domicilio") l.push("Domicilio: " + precio(PEDIDOS.costoDomicilio));
-    l.push("TOTAL: " + precio(total()));
-    const con = Number(soloDigitos(pedido.pagaCon));
-    l.push("Pago: " + pedido.pago + (pedido.pago === "Efectivo" && con ? " (paga con " + precio(con) + ")" : ""));
-    if (pedido.notas.trim()) l.push("Notas: " + pedido.notas.trim());
+    l.push("*TOTAL: " + precio(total()) + "*");
+    l.push(linea);
+    l.push("*Pago:* " + pedido.pago);
+    if (pedido.pago === "Efectivo" && con) {
+      l.push("*Paga con:* " + precio(con));
+      if (con > total()) l.push("*Cambio:* " + precio(con - total()));
+    }
+    if (pedido.notas.trim()) l.push("*Nota:* " + pedido.notas.trim());
     return l.join("\n");
   }
   window.__mensajePedido = mensaje;
