@@ -16,10 +16,10 @@
    ===================================================================== */
 const NEGOCIO = {
   nombre: "Exquisito Fast Food",
-  eslogan: "Hamburguesas, perros, salchipapas y alitas",
+  eslogan: "Más rico que el chisme del barrio",
   logo: "logo.png",               // vacío ("") = sello con la letra E
-  direccion: "Calle 00 # 00-00, Barrio, Ciudad",
-  domicilios: "300 000 0000",      // teléfono para domicilios
+  direccion: "CR10 #9B 22 BUENAVISTA CÓRDOBA",
+  domicilios: "300 248 8405",      
   horarioTexto: "Todos los días, 5:00 p.m. a 11:00 p.m.",
   // Horario por día (0 = domingo ... 6 = sábado). null = cerrado ese día.
   // Si cierra después de medianoche, usa p. ej. ["17:00", "01:00"].
@@ -33,18 +33,16 @@ const NEGOCIO = {
     6: ["17:00", "23:00"]
   },
   zonaHoraria: "America/Bogota",
-  redes: [
-    { red: "instagram", usuario: "@exquisitofastfood", url: "https://instagram.com/" },
-    { red: "facebook",  usuario: "Exquisito Fast Food", url: "https://facebook.com/" },
-    { red: "tiktok",    usuario: "@exquisitofastfood", url: "https://tiktok.com/" }
-  ]
+
 };
 
 /* =====================================================================
    MENÚ  —  edita aquí
    Cada producto: nombre, descripcion, precio (número sin puntos),
-   etiqueta (opcional, ej. "El más pedido"), foto (opcional, ej. "img/combo.jpg")
+   etiqueta (opcional, ej. "El más pedido"), foto (opcional, ej. "img/combo.jpg"),
+   agotado: true (opcional) para mostrarlo como agotado sin borrarlo.
    La categoría con destacada: true se muestra en recuadro especial (combos).
+   La categoría con compacta: true se muestra como lista simple sin fotos (adiciones).
    ===================================================================== */
 const MENU = [
   {
@@ -70,7 +68,7 @@ const MENU = [
     productos: [
       { nombre: "Perro Sencillo", descripcion: "Salchicha americana, papa ripio, queso rallado y salsas.", precio: 11000, etiqueta: "", foto: "" },
       { nombre: "Perro Especial", descripcion: "Salchicha americana, tocineta, queso gratinado, maicitos y huevo de codorniz.", precio: 16000, etiqueta: "", foto: "" },
-      { nombre: "Perro Ranchero", descripcion: "Salchicha ranchera, chorizo, queso gratinado y cebolla caramelizada.", precio: 17000, etiqueta: "", foto: "" }
+      { nombre: "Perro Ranchero", descripcion: "Salchicha ranchera, chorizo, queso gratinado y cebolla caramelizada.", precio: 17000, etiqueta: "", foto: "", agotado: true }
     ]
   },
   {
@@ -89,6 +87,18 @@ const MENU = [
     ]
   },
   {
+    categoria: "Adiciones",
+    compacta: true,
+    productos: [
+      { nombre: "Queso extra", precio: 2000 },
+      { nombre: "Tocineta", precio: 3000 },
+      { nombre: "Huevo frito", precio: 2000 },
+      { nombre: "Carne extra 150 g", precio: 6000 },
+      { nombre: "Porción de papas", precio: 5000 },
+      { nombre: "Salsa extra", precio: 1000 }
+    ]
+  },
+  {
     categoria: "Bebidas",
     productos: [
       { nombre: "Gaseosa personal", descripcion: "350 ml. Pregunta por los sabores disponibles.", precio: 3500, etiqueta: "", foto: "" },
@@ -98,6 +108,21 @@ const MENU = [
     ]
   }
 ];
+
+/* =====================================================================
+   PROMOCIÓN DEL DÍA  —  edita aquí
+   Una promoción por día (0 = domingo ... 6 = sábado). null = sin promoción.
+   Solo se muestra la del día de hoy, arriba del menú.
+   ===================================================================== */
+const PROMOS = {
+  0: null,
+  1: null,
+  2: { titulo: "Martes de alitas", descripcion: "Pide alitas x 12 y llévate una gaseosa de 1,5 L gratis.", precio: 32000 },
+  3: null,
+  4: { titulo: "Jueves de combos", descripcion: "Combo Pareja con porción extra de papas.", precio: 45000 },
+  5: null,
+  6: null
+};
 </script>
 
 <style>
@@ -265,6 +290,44 @@ ul.lista { list-style: none; margin: 0; padding: 0; }
 }
 .descripcion { margin: 5px 0 0; color: var(--gris); font-size: 14px; }
 
+/* Agotado */
+.producto.agotado .foto, .producto.agotado .nombre, .producto.agotado .descripcion { opacity: .45; }
+.producto.agotado .precio { color: var(--gris); text-decoration: line-through; font-weight: 600; }
+.agotado-marca {
+  display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 4px;
+  background: var(--tinta); color: var(--crema);
+  font-stretch: 85%; font-weight: 700; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+}
+
+/* Adiciones (lista compacta) */
+.compacta .producto { padding: 11px 0; gap: 0; }
+.compacta .nombre { flex: none; font-size: 16px; font-weight: 600; }
+.compacta .fila { gap: 8px; }
+.compacta .fila::before {
+  content: ""; order: 1; flex: 1; min-width: 16px;
+  border-bottom: 1.5px dotted #CFC6B6; transform: translateY(-4px);
+}
+.compacta .precio { order: 2; font-size: 16px; }
+.compacta .agotado-marca { margin: 0 0 0 8px; vertical-align: 2px; }
+
+/* Promoción del día */
+.promo {
+  margin-top: 20px; padding: 18px 18px 18px;
+  background: var(--acento); color: var(--crema);
+  border-radius: 14px; border: 1.5px solid var(--dorado);
+  position: relative; overflow: hidden;
+}
+.promo .rotulo {
+  display: inline-block; margin-bottom: 8px;
+  font-stretch: 85%; font-weight: 700; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: #D9B866;
+}
+.promo .fila { align-items: baseline; }
+.promo h2 { margin: 0; flex: 1; color: var(--crema); font-size: 26px; line-height: 1; }
+.promo .precio { color: #D9B866; font-size: 22px; }
+.promo p { margin: 8px 0 0; color: #D6CEC2; font-size: 14px; }
+.promo.oculta { display: none; }
+
 .sin-resultados { display: none; text-align: center; padding: 48px 8px 24px; color: var(--gris); }
 .sin-resultados.visible { display: block; }
 .sin-resultados strong { display: block; color: var(--tinta); font-stretch: 75%; font-size: 20px; text-transform: uppercase; margin-bottom: 4px; }
@@ -324,6 +387,7 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
 </nav>
 
 <main class="contenedor">
+  <div id="promo"></div>
   <div id="menu"></div>
   <div class="sin-resultados" id="sinResultados">
     <strong>Sin resultados</strong>
@@ -451,15 +515,27 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
       ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nombre) + '" loading="lazy" onerror="this.parentNode.innerHTML=window.__ICONO_PLATO">'
       : ICONO_PLATO;
     const etiqueta = p.etiqueta ? '<span class="etiqueta">' + esc(p.etiqueta) + "</span>" : "";
-    const texto = normalizar([p.nombre, p.descripcion, p.etiqueta].join(" "));
+    const texto = normalizar([p.nombre, p.descripcion, p.etiqueta, p.agotado ? "agotado" : ""].join(" "));
+    const agotado = p.agotado ? '<span class="agotado-marca">Agotado</span>' : "";
     return (
-      '<li class="producto" data-texto="' + esc(texto) + '">' +
+      '<li class="producto' + (p.agotado ? " agotado" : "") + '" data-texto="' + esc(texto) + '">' +
         '<div class="foto">' + foto + "</div>" +
         '<div class="info">' +
           '<div class="fila"><h3 class="nombre">' + esc(p.nombre) + etiqueta + "</h3>" +
           '<span class="precio">' + precio(p.precio) + "</span></div>" +
           (p.descripcion ? '<p class="descripcion">' + esc(p.descripcion) + "</p>" : "") +
+          agotado +
         "</div>" +
+      "</li>"
+    );
+  }
+  function htmlCompacto(p) {
+    const texto = normalizar([p.nombre, p.descripcion, p.agotado ? "agotado" : ""].join(" "));
+    return (
+      '<li class="producto' + (p.agotado ? " agotado" : "") + '" data-texto="' + esc(texto) + '">' +
+        '<div class="info"><div class="fila"><h3 class="nombre">' + esc(p.nombre) +
+        (p.agotado ? '<span class="agotado-marca">Agotado</span>' : "") + "</h3>" +
+        '<span class="precio">' + precio(p.precio) + "</span></div></div>" +
       "</li>"
     );
   }
@@ -467,11 +543,25 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
 
   $("menu").innerHTML = secciones.map((cat) => {
     const contenido = '<h2 class="titulo">' + esc(cat.categoria) + "</h2>" +
-      '<ul class="lista">' + cat.productos.map(htmlProducto).join("") + "</ul>";
-    return '<section class="categoria' + (cat.destacada ? " destacada" : "") + '" id="' + cat.id + '">' +
+      '<ul class="lista">' + cat.productos.map(cat.compacta ? htmlCompacto : htmlProducto).join("") + "</ul>";
+    return '<section class="categoria' + (cat.destacada ? " destacada" : "") + (cat.compacta ? " compacta" : "") + '" id="' + cat.id + '">' +
       (cat.destacada ? '<div class="caja">' + contenido + "</div>" : contenido) +
       "</section>";
   }).join("");
+
+  /* ---------- Promoción del día ---------- */
+  const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  function pintarPromo() {
+    const dia = ahoraLocal().dia;
+    const pr = PROMOS[dia];
+    $("promo").innerHTML = pr
+      ? '<div class="promo"><span class="rotulo">Promoción de hoy · ' + DIAS[dia] + "</span>" +
+        '<div class="fila"><h2 class="titulo">' + esc(pr.titulo) + "</h2>" +
+        (pr.precio ? '<span class="precio">' + precio(pr.precio) + "</span>" : "") + "</div>" +
+        (pr.descripcion ? "<p>" + esc(pr.descripcion) + "</p>" : "") + "</div>"
+      : "";
+  }
+  pintarPromo();
 
   $("pestanas").innerHTML = secciones.map((cat) =>
     '<a href="#' + cat.id + '" data-id="' + cat.id + '">' + esc(cat.categoria) + "</a>"
