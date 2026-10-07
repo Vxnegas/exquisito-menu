@@ -116,6 +116,20 @@ const PROMOS = {
   5: null,
   6: null
 };
+
+/* =====================================================================
+   PEDIDOS POR WHATSAPP  —  edita aquí
+   Solo se activan si la dirección termina en ?pedir
+   (ej. https://exquisito-menu.vercel.app/?pedir). Sin ?pedir el menú
+   queda solo para ver, como el del QR de las mesas.
+   El horario para recibir pedidos es el mismo de NEGOCIO.horario.
+   ===================================================================== */
+const PEDIDOS = {
+  whatsapp: "573023146654",        // 57 + número, sin espacios ni signos
+  costoDomicilio: 3000,
+  pedidoMinimoDomicilio: 15000,
+  formasDePago: ["Efectivo", "Nequi", "Daviplata"]
+};
 </script>
 
 <style>
@@ -352,6 +366,143 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
 }
 .redes a:active { background: #2A2522; }
 .nota { border-top: 1px solid #332E2B; padding-top: 16px; font-size: 12px; color: #8F8780; }
+
+/* ---------- Modo pedir ---------- */
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pedir-fila { display: flex; justify-content: flex-end; margin-top: 10px; }
+.btn-agregar {
+  height: 40px; min-width: 112px; padding: 0 18px;
+  border: 1.5px solid var(--acento); border-radius: 999px; background: transparent;
+  font-stretch: 85%; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--acento);
+}
+.btn-agregar:active { background: var(--acento-suave); }
+.contador {
+  display: inline-flex; align-items: center; height: 40px; min-width: 112px;
+  background: var(--acento); color: var(--crema); border-radius: 999px;
+}
+.contador button {
+  width: 40px; height: 40px; border: 0; background: none; color: var(--crema);
+  display: grid; place-items: center; border-radius: 50%;
+}
+.contador button:active { background: rgba(253,250,243,.15); }
+.contador span { flex: 1; min-width: 28px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.contador.claro { background: var(--acento-suave); color: var(--tinta); }
+.contador.claro button { color: var(--tinta); }
+
+body.con-barra-pedido main { padding-bottom: 88px; }
+.barra-pedido {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  background: var(--acento); color: var(--crema);
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  transform: translateY(110%); transition: transform .25s ease;
+  box-shadow: 0 -6px 20px rgba(0,0,0,.18);
+}
+.barra-pedido.visible { transform: none; }
+.barra-pedido .contenedor { display: flex; align-items: center; gap: 12px; }
+.barra-pedido .resumen { flex: 1; min-width: 0; line-height: 1.2; }
+.barra-pedido .resumen small { display: block; font-size: 12px; color: #C9C2BC; }
+.barra-pedido .resumen b { font-stretch: 75%; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.btn-dorado {
+  height: 48px; padding: 0 20px; border: 0; border-radius: 12px;
+  background: #D9B866; color: var(--acento);
+  font-stretch: 85%; font-weight: 800; font-size: 14px; letter-spacing: .05em; text-transform: uppercase;
+}
+.btn-dorado:active { background: #C9A24A; }
+
+.hoja-fondo {
+  position: fixed; inset: 0; z-index: 40; background: rgba(22,20,18,.5);
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+}
+.hoja-fondo.abierta { opacity: 1; pointer-events: auto; }
+.hoja {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  max-width: 640px; margin: 0 auto;
+  max-height: 92vh; max-height: 92dvh;
+  display: flex; flex-direction: column;
+  background: var(--fondo); border-radius: 18px 18px 0 0;
+  transform: translateY(105%); transition: transform .3s ease;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.25);
+}
+.hoja.abierta { transform: none; }
+.hoja-cab {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 12px; border-bottom: 1px solid var(--linea);
+}
+.hoja-cab h2 { margin: 0; font-size: 24px; line-height: 1; }
+.btn-cerrar {
+  width: 44px; height: 44px; margin: -8px -8px -8px 0; border: 0; background: none;
+  display: grid; place-items: center; border-radius: 50%; color: var(--tinta);
+}
+.hoja-cuerpo { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 16px 20px; overscroll-behavior: contain; }
+.hoja-pie { border-top: 1px solid var(--linea); padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); background: var(--fondo); }
+
+.bloque { padding-top: 18px; }
+.bloque > h3 {
+  margin: 0 0 10px; font-stretch: 75%; font-weight: 800; font-size: 15px;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--tinta);
+}
+.items { list-style: none; margin: 0; padding: 0; }
+.item { padding: 12px 0; border-bottom: 1px solid var(--linea); }
+.item:last-child { border-bottom: 0; }
+.item .fila { align-items: baseline; }
+.item .nombre { font-size: 17px; }
+.item .unit { font-size: 13px; color: var(--gris); margin-top: 2px; }
+.item .acciones { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.btn-quitar {
+  height: 40px; padding: 0 4px; border: 0; background: none;
+  font-size: 14px; color: var(--gris); text-decoration: underline; text-underline-offset: 3px;
+}
+.vacio { text-align: center; padding: 28px 0 8px; color: var(--gris); }
+
+.opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opciones.tres { grid-template-columns: 1fr 1fr 1fr; }
+.opcion {
+  min-height: 48px; padding: 8px 10px; border-radius: 12px;
+  border: 1.5px solid var(--linea); background: #fff;
+  font-weight: 600; font-size: 15px; color: var(--tinta);
+}
+.opcion[aria-pressed="true"] { border-color: var(--acento); background: var(--acento); color: var(--crema); }
+
+.campo { margin-top: 12px; }
+.campo.error-solo { margin-top: 0; }
+.campo label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: var(--tinta); }
+.campo label small { font-weight: 400; color: var(--gris); }
+.campo input, .campo textarea {
+  width: 100%; min-height: 48px; padding: 12px 14px;
+  border: 1.5px solid var(--linea); border-radius: 12px; background: #fff;
+  font: inherit; font-size: 16px; color: var(--tinta);
+  -webkit-appearance: none; appearance: none;
+}
+.campo textarea { min-height: 80px; resize: vertical; }
+.campo input:focus, .campo textarea:focus { outline: none; border-color: var(--acento); }
+.campo.con-error input, .campo.con-error textarea { border-color: #B3261E; }
+.error-msg { display: none; margin-top: 6px; font-size: 13px; font-weight: 600; color: #B3261E; }
+.con-error > .error-msg { display: block; }
+
+.alerta {
+  margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: #FCEDEA; color: #8C1D18; font-size: 14px;
+}
+.desglose { margin-top: 18px; padding: 14px; border-radius: 12px; background: var(--calido); }
+.desglose div { display: flex; justify-content: space-between; padding: 3px 0; font-variant-numeric: tabular-nums; }
+.desglose .total { margin-top: 6px; padding-top: 9px; border-top: 1px solid #E2DCD5; font-stretch: 75%; font-weight: 800; font-size: 20px; color: var(--tinta); }
+
+.btn-whatsapp {
+  width: 100%; height: 54px; border: 0; border-radius: 14px;
+  background: #1E9E4F; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-weight: 700; font-size: 16px;
+}
+.btn-whatsapp:active { background: #198A44; }
+.btn-whatsapp:disabled { background: #BDB6AD; color: #F4F0EB; cursor: not-allowed; }
+.pie-nota { margin: 8px 0 0; text-align: center; font-size: 12.5px; color: var(--gris); }
+.pie-total { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.pie-total span { font-size: 14px; color: var(--gris); }
+.pie-total b { font-stretch: 75%; font-weight: 800; font-size: 22px; color: var(--tinta); font-variant-numeric: tabular-nums; }
+.pie-alerta { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #FCEDEA; color: #8C1D18; font-size: 14px; font-weight: 600; text-align: center; }
+.enviado { margin-top: 10px; text-align: center; font-size: 13.5px; color: var(--texto); }
+.enviado button { border: 0; background: none; padding: 6px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; color: var(--tinta); }
 </style>
 </head>
 <body>
@@ -389,7 +540,7 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
   </div>
   <div class="aviso">
     <h3 class="titulo">¿Ya sabes qué vas a pedir?</h3>
-    <p>Llama a tu mesero y con gusto toma tu orden.</p>
+    <p id="avisoTexto">Llama a tu mesero y con gusto toma tu orden.</p>
   </div>
 </main>
 
@@ -415,9 +566,92 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
   </div>
 </footer>
 
+<div class="barra-pedido" id="barraPedido" hidden>
+  <div class="contenedor">
+    <div class="resumen"><small id="barraCantidad"></small><b id="barraTotal"></b></div>
+    <button class="btn-dorado" id="verPedido" type="button">Ver mi pedido</button>
+  </div>
+</div>
+
+<div class="hoja-fondo" id="hojaFondo" hidden></div>
+<div class="hoja" id="hoja" role="dialog" aria-modal="true" aria-labelledby="hojaTitulo" hidden>
+  <div class="hoja-cab">
+    <h2 class="titulo" id="hojaTitulo">Tu pedido</h2>
+    <button class="btn-cerrar" id="cerrarHoja" type="button" aria-label="Cerrar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="hoja-cuerpo" id="hojaCuerpo">
+    <ul class="items" id="items"></ul>
+
+    <div class="bloque">
+      <h3>¿Cómo lo quieres?</h3>
+      <div class="opciones" id="opcTipo">
+        <button class="opcion" type="button" data-tipo="domicilio">Domicilio</button>
+        <button class="opcion" type="button" data-tipo="recoger">Para recoger</button>
+      </div>
+      <div class="campo error-solo" id="errTipo"><div class="error-msg">Elige domicilio o para recoger.</div></div>
+      <div id="bloqueDomicilio" hidden>
+        <div class="campo" id="cDireccion">
+          <label for="fDireccion">Dirección y barrio</label>
+          <input id="fDireccion" type="text" autocomplete="street-address" placeholder="Ej. Calle 5 # 8-20, barrio El Centro">
+          <div class="error-msg">Escribe la dirección y el barrio.</div>
+        </div>
+        <div class="campo">
+          <label for="fReferencia">Referencia <small>(opcional)</small></label>
+          <input id="fReferencia" type="text" placeholder="Ej. casa de rejas blancas, frente a la tienda">
+        </div>
+        <div class="alerta" id="alertaMinimo" hidden></div>
+      </div>
+    </div>
+
+    <div class="bloque">
+      <h3>Forma de pago</h3>
+      <div class="opciones tres" id="opcPago"></div>
+      <div class="campo error-solo" id="errPago"><div class="error-msg">Elige la forma de pago.</div></div>
+      <div class="campo" id="cPagaCon" hidden>
+        <label for="fPagaCon">¿Con cuánto vas a pagar?</label>
+        <input id="fPagaCon" type="text" inputmode="numeric" placeholder="Ej. 50.000">
+        <div class="error-msg" id="errPagaCon">Escribe con cuánto vas a pagar.</div>
+      </div>
+    </div>
+
+    <div class="bloque">
+      <h3>Tus datos</h3>
+      <div class="campo" id="cNombre">
+        <label for="fNombre">Nombre</label>
+        <input id="fNombre" type="text" autocomplete="name" placeholder="Tu nombre">
+        <div class="error-msg">Escribe tu nombre.</div>
+      </div>
+      <div class="campo" id="cTelefono">
+        <label for="fTelefono">Teléfono</label>
+        <input id="fTelefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej. 300 123 4567">
+        <div class="error-msg">Escribe un teléfono válido.</div>
+      </div>
+      <div class="campo">
+        <label for="fNotas">Notas <small>(opcional)</small></label>
+        <textarea id="fNotas" placeholder="Ej. sin cebolla, salsas aparte"></textarea>
+      </div>
+    </div>
+
+    <div class="desglose" id="desglose"></div>
+  </div>
+  <div class="hoja-pie">
+    <div class="pie-total"><span>Total</span><b id="pieTotal"></b></div>
+    <p class="pie-alerta" id="pieAlerta" hidden></p>
+    <button class="btn-whatsapp" id="enviar" type="button">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.8 2.3 1 2.5c.1.2 1.7 2.6 4.1 3.6 1.5.7 2.1.7 2.9.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.4-.2z"/></svg>
+      Enviar pedido por WhatsApp
+    </button>
+    <p class="pie-nota">Se abrirá WhatsApp con tu pedido escrito. Solo tienes que darle enviar.</p>
+    <div class="enviado" id="enviado" hidden>¿Ya enviaste tu pedido? <button type="button" id="nuevoPedido">Empezar un pedido nuevo</button></div>
+  </div>
+</div>
+
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
+  const MODO_PEDIR = new URLSearchParams(location.search).has("pedir");
 
   const ICONO_PLATO =
     '<svg width="34" height="34" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -474,6 +708,17 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
       return { dia: d.getDay(), min: d.getHours() * 60 + d.getMinutes() };
     }
   }
+  let estadoNegocio = { abierto: true, mensajeCerrado: "" };
+  let alCambiarHorario = null;
+  function proximaApertura(dia, min) {
+    const hoy = NEGOCIO.horario[dia];
+    if (hoy && min < aMin(hoy[0])) return "Abrimos a las " + hora12(hoy[0]);
+    for (let i = 1; i <= 7; i++) {
+      const d = (dia + i) % 7, h = NEGOCIO.horario[d];
+      if (h) return "Abrimos " + (i === 1 ? "mañana" : "el " + ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][d]) + " a las " + hora12(h[0]);
+    }
+    return "";
+  }
   function actualizarEstado() {
     const { dia, min } = ahoraLocal();
     const hoy = NEGOCIO.horario[dia];
@@ -497,6 +742,8 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
     else if (hoy && min < aMin(hoy[0])) horas = "· Abre hoy a las " + hora12(hoy[0]);
     else horas = "· " + NEGOCIO.horarioTexto;
     $("estadoHoras").textContent = horas;
+    estadoNegocio = { abierto, mensajeCerrado: abierto ? "" : ("Estamos cerrados. " + proximaApertura(dia, min)).trim() };
+    if (alCambiarHorario) alCambiarHorario();
   }
   actualizarEstado();
   setInterval(actualizarEstado, 60000);
@@ -504,7 +751,15 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
   /* ---------- Menú ---------- */
   const secciones = MENU.map((cat) => ({ ...cat, id: slug(cat.categoria) }));
 
-  function htmlProducto(p) {
+  const ICONO_MENOS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>';
+  const ICONO_MAS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>';
+  const PRODUCTOS = {};
+  const claveDe = (cat, p) => slug(cat.categoria) + "__" + slug(p.nombre);
+  secciones.forEach((cat) => cat.productos.forEach((p) => { PRODUCTOS[claveDe(cat, p)] = p; }));
+  const htmlControl = (p, clave) =>
+    MODO_PEDIR && !p.agotado ? '<div class="pedir-fila"><div class="control" data-clave="' + clave + '"></div></div>' : "";
+
+  function htmlProducto(p, clave) {
     const foto = p.foto
       ? '<img src="' + esc(p.foto) + '" alt="' + esc(p.nombre) + '" loading="lazy" onerror="this.parentNode.innerHTML=window.__ICONO_PLATO">'
       : ICONO_PLATO;
@@ -519,17 +774,19 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
           '<span class="precio">' + precio(p.precio) + "</span></div>" +
           (p.descripcion ? '<p class="descripcion">' + esc(p.descripcion) + "</p>" : "") +
           agotado +
+          htmlControl(p, clave) +
         "</div>" +
       "</li>"
     );
   }
-  function htmlCompacto(p) {
+  function htmlCompacto(p, clave) {
     const texto = normalizar([p.nombre, p.descripcion, p.agotado ? "agotado" : ""].join(" "));
     return (
       '<li class="producto' + (p.agotado ? " agotado" : "") + '" data-texto="' + esc(texto) + '">' +
         '<div class="info"><div class="fila"><h3 class="nombre">' + esc(p.nombre) +
         (p.agotado ? '<span class="agotado-marca">Agotado</span>' : "") + "</h3>" +
-        '<span class="precio">' + precio(p.precio) + "</span></div></div>" +
+        '<span class="precio">' + precio(p.precio) + "</span></div>" +
+        htmlControl(p, clave) + "</div>" +
       "</li>"
     );
   }
@@ -537,7 +794,7 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
 
   $("menu").innerHTML = secciones.map((cat) => {
     const contenido = '<h2 class="titulo">' + esc(cat.categoria) + "</h2>" +
-      '<ul class="lista">' + cat.productos.map(cat.compacta ? htmlCompacto : htmlProducto).join("") + "</ul>";
+      '<ul class="lista">' + cat.productos.map((p) => (cat.compacta ? htmlCompacto : htmlProducto)(p, claveDe(cat, p))).join("") + "</ul>";
     return '<section class="categoria' + (cat.destacada ? " destacada" : "") + (cat.compacta ? " compacta" : "") + '" id="' + cat.id + '">' +
       (cat.destacada ? '<div class="caja">' + contenido + "</div>" : contenido) +
       "</section>";
@@ -654,6 +911,259 @@ footer .marca { font-stretch: 62%; font-weight: 900; font-size: 26px; color: var
   limpiar.addEventListener("click", () => { input.value = ""; filtrar(); input.focus(); });
 
   alDesplazar();
+
+  /* =====================================================================
+     PEDIDOS POR WHATSAPP (solo con ?pedir)
+     ===================================================================== */
+  if (!MODO_PEDIR) return;
+
+  const LS_PEDIDO = "exquisito-pedido-v1";
+  const LS_CLIENTE = "exquisito-cliente-v1";
+  const leer = (k) => { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch (e) { return {}; } };
+  const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  const guardado = leer(LS_PEDIDO);
+  const pedido = {
+    carrito: {},
+    tipo: guardado.tipo || "",
+    pago: guardado.pago || "",
+    pagaCon: guardado.pagaCon || "",
+    notas: guardado.notas || "",
+    enviado: !!guardado.enviado
+  };
+  Object.entries(guardado.carrito || {}).forEach(([k, n]) => {
+    if (PRODUCTOS[k] && !PRODUCTOS[k].agotado && n > 0) pedido.carrito[k] = Math.min(99, Math.floor(n));
+  });
+  const cliente = Object.assign({ nombre: "", telefono: "", direccion: "", referencia: "" }, leer(LS_CLIENTE));
+
+  const persistir = () => {
+    guardar(LS_PEDIDO, pedido);
+    guardar(LS_CLIENTE, cliente);
+  };
+
+  $("avisoTexto").textContent = "Agrega tus productos y envíanos tu pedido por WhatsApp.";
+
+  const soloDigitos = (s) => String(s || "").replace(/\D/g, "");
+  const cantidadTotal = () => Object.values(pedido.carrito).reduce((a, n) => a + n, 0);
+  const subtotal = () => Object.entries(pedido.carrito).reduce((a, [k, n]) => a + PRODUCTOS[k].precio * n, 0);
+  const total = () => subtotal() + (pedido.tipo === "domicilio" ? PEDIDOS.costoDomicilio : 0);
+  const faltaMinimo = () => (pedido.tipo === "domicilio" ? Math.max(0, PEDIDOS.pedidoMinimoDomicilio - subtotal()) : 0);
+  let hojaAbierta = false;
+
+  function cambiarCantidad(clave, delta) {
+    const n = (pedido.carrito[clave] || 0) + delta;
+    if (n <= 0) delete pedido.carrito[clave];
+    else pedido.carrito[clave] = Math.min(99, n);
+    pedido.enviado = false;
+    persistir();
+    pintarTodo();
+  }
+
+  function htmlContador(clave, n, claro) {
+    return '<div class="contador' + (claro ? " claro" : "") + '">' +
+      '<button type="button" data-accion="menos" data-clave="' + clave + '" aria-label="Quitar uno">' + ICONO_MENOS + "</button>" +
+      '<span aria-live="polite">' + n + "</span>" +
+      '<button type="button" data-accion="mas" data-clave="' + clave + '" aria-label="Agregar uno">' + ICONO_MAS + "</button></div>";
+  }
+
+  function pintarControles() {
+    document.querySelectorAll(".control").forEach((el) => {
+      const n = pedido.carrito[el.dataset.clave] || 0;
+      el.innerHTML = n
+        ? htmlContador(el.dataset.clave, n, false)
+        : '<button type="button" class="btn-agregar" data-accion="mas" data-clave="' + el.dataset.clave + '">Agregar</button>';
+    });
+  }
+
+  function pintarBarra() {
+    const n = cantidadTotal();
+    const barraEl = $("barraPedido");
+    barraEl.hidden = false;
+    $("barraCantidad").textContent = n + (n === 1 ? " producto" : " productos");
+    $("barraTotal").textContent = precio(subtotal());
+    barraEl.classList.toggle("visible", n > 0);
+    document.body.classList.toggle("con-barra-pedido", n > 0);
+  }
+
+  function pintarHoja() {
+    const claves = Object.keys(pedido.carrito);
+    $("items").innerHTML = claves.length
+      ? claves.map((k) => {
+          const p = PRODUCTOS[k], n = pedido.carrito[k];
+          return '<li class="item"><div class="fila"><h3 class="nombre">' + esc(p.nombre) + "</h3>" +
+            '<span class="precio">' + precio(p.precio * n) + "</span></div>" +
+            '<div class="unit">' + precio(p.precio) + " c/u</div>" +
+            '<div class="acciones">' + htmlContador(k, n, true) +
+            '<button type="button" class="btn-quitar" data-accion="quitar" data-clave="' + k + '">Quitar</button></div></li>';
+        }).join("")
+      : '<li class="vacio">Tu pedido está vacío.<br>Agrega productos desde el menú.</li>';
+
+    document.querySelectorAll("#opcTipo .opcion").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tipo === pedido.tipo)));
+    document.querySelectorAll("#opcPago .opcion").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.pago === pedido.pago)));
+    $("bloqueDomicilio").hidden = pedido.tipo !== "domicilio";
+    $("cPagaCon").hidden = pedido.pago !== "Efectivo";
+
+    const falta = faltaMinimo();
+    $("alertaMinimo").hidden = !(falta > 0 && claves.length);
+    $("alertaMinimo").textContent = "El pedido mínimo para domicilio es " + precio(PEDIDOS.pedidoMinimoDomicilio) +
+      ". Te faltan " + precio(falta) + ".";
+
+    $("desglose").innerHTML =
+      "<div><span>Subtotal</span><span>" + precio(subtotal()) + "</span></div>" +
+      (pedido.tipo === "domicilio" ? "<div><span>Domicilio</span><span>" + precio(PEDIDOS.costoDomicilio) + "</span></div>" : "") +
+      '<div class="total"><span>TOTAL</span><span>' + precio(total()) + "</span></div>";
+    $("pieTotal").textContent = precio(total());
+
+    let alerta = "";
+    if (!estadoNegocio.abierto) alerta = estadoNegocio.mensajeCerrado;
+    else if (claves.length && falta > 0) alerta = "Te faltan " + precio(falta) + " para el pedido mínimo a domicilio.";
+    $("pieAlerta").hidden = !alerta;
+    $("pieAlerta").textContent = alerta;
+    $("enviar").disabled = !estadoNegocio.abierto || !claves.length || falta > 0;
+    $("enviado").hidden = !(pedido.enviado && claves.length);
+  }
+
+  function pintarTodo() {
+    pintarControles();
+    pintarBarra();
+    if (hojaAbierta) pintarHoja();
+  }
+
+  /* ----- Formas de pago ----- */
+  $("opcPago").innerHTML = PEDIDOS.formasDePago.map((f) =>
+    '<button class="opcion" type="button" data-pago="' + esc(f) + '">' + esc(f) + "</button>").join("");
+  if (pedido.pago && PEDIDOS.formasDePago.indexOf(pedido.pago) < 0) pedido.pago = "";
+
+  /* ----- Campos: valores guardados ----- */
+  const campos = {
+    fNombre: [cliente, "nombre"], fTelefono: [cliente, "telefono"],
+    fDireccion: [cliente, "direccion"], fReferencia: [cliente, "referencia"],
+    fNotas: [pedido, "notas"], fPagaCon: [pedido, "pagaCon"]
+  };
+  Object.entries(campos).forEach(([id, [fuente, prop]]) => {
+    const el = $(id);
+    el.value = fuente[prop] || "";
+    el.addEventListener("input", () => {
+      if (id === "fPagaCon") {
+        const d = soloDigitos(el.value);
+        el.value = d ? precio(Number(d)).slice(1) : "";
+      }
+      fuente[prop] = el.value;
+      const cont = el.closest(".campo");
+      if (cont) cont.classList.remove("con-error");
+      persistir();
+    });
+  });
+
+  /* ----- Hoja del pedido ----- */
+  const hoja = $("hoja"), fondo = $("hojaFondo");
+  function abrirHoja() {
+    hojaAbierta = true;
+    hoja.hidden = false; fondo.hidden = false;
+    pintarHoja();
+    $("hojaCuerpo").scrollTop = 0;
+    requestAnimationFrame(() => requestAnimationFrame(() => { hoja.classList.add("abierta"); fondo.classList.add("abierta"); }));
+    document.body.style.overflow = "hidden";
+  }
+  function cerrarHoja() {
+    hojaAbierta = false;
+    hoja.classList.remove("abierta"); fondo.classList.remove("abierta");
+    document.body.style.overflow = "";
+    setTimeout(() => { if (!hojaAbierta) { hoja.hidden = true; fondo.hidden = true; } }, 300);
+  }
+  $("verPedido").addEventListener("click", abrirHoja);
+  $("cerrarHoja").addEventListener("click", cerrarHoja);
+  fondo.addEventListener("click", cerrarHoja);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && hojaAbierta) cerrarHoja(); });
+
+  /* ----- Clics (menú y hoja) ----- */
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-accion]");
+    if (b) {
+      const k = b.dataset.clave;
+      if (b.dataset.accion === "mas") cambiarCantidad(k, 1);
+      else if (b.dataset.accion === "menos") cambiarCantidad(k, -1);
+      else if (b.dataset.accion === "quitar") cambiarCantidad(k, -(pedido.carrito[k] || 0));
+      return;
+    }
+    const t = e.target.closest("#opcTipo .opcion");
+    if (t) {
+      pedido.tipo = t.dataset.tipo;
+      $("errTipo").classList.remove("con-error");
+      persistir(); pintarHoja();
+      return;
+    }
+    const pg = e.target.closest("#opcPago .opcion");
+    if (pg) {
+      pedido.pago = pg.dataset.pago;
+      $("errPago").classList.remove("con-error");
+      persistir(); pintarHoja();
+    }
+  });
+
+  /* ----- Validar y enviar ----- */
+  function validar() {
+    const errores = [];
+    const marcar = (id, ok) => { $(id).classList.toggle("con-error", !ok); if (!ok) errores.push($(id)); };
+    marcar("errTipo", !!pedido.tipo);
+    if (pedido.tipo === "domicilio") marcar("cDireccion", cliente.direccion.trim().length >= 5);
+    marcar("errPago", !!pedido.pago);
+    if (pedido.pago === "Efectivo") {
+      const con = Number(soloDigitos(pedido.pagaCon));
+      $("errPagaCon").textContent = !con ? "Escribe con cuánto vas a pagar."
+        : "Debe ser igual o mayor al total (" + precio(total()) + ").";
+      marcar("cPagaCon", con >= total());
+    }
+    marcar("cNombre", cliente.nombre.trim().length >= 2);
+    const tel = soloDigitos(cliente.telefono).length;
+    marcar("cTelefono", tel >= 7 && tel <= 13);
+    if (errores.length) errores[0].scrollIntoView({ behavior: "smooth", block: "center" });
+    return !errores.length;
+  }
+
+  function mensaje() {
+    const l = [];
+    l.push("🍔 NUEVO PEDIDO – " + NEGOCIO.nombre);
+    l.push("Nombre: " + cliente.nombre.trim());
+    l.push("Teléfono: " + cliente.telefono.trim());
+    l.push("Tipo: " + (pedido.tipo === "domicilio" ? "Domicilio" : "Para recoger"));
+    if (pedido.tipo === "domicilio") {
+      l.push("Dirección: " + cliente.direccion.trim() + (cliente.referencia.trim() ? " (referencia: " + cliente.referencia.trim() + ")" : ""));
+    }
+    l.push("");
+    Object.entries(pedido.carrito).forEach(([k, n]) => {
+      l.push("• " + n + " x " + PRODUCTOS[k].nombre + " – " + precio(PRODUCTOS[k].precio * n));
+    });
+    l.push("");
+    l.push("Subtotal: " + precio(subtotal()));
+    if (pedido.tipo === "domicilio") l.push("Domicilio: " + precio(PEDIDOS.costoDomicilio));
+    l.push("TOTAL: " + precio(total()));
+    l.push("Pago: " + pedido.pago + (pedido.pago === "Efectivo" ? " (paga con " + precio(Number(soloDigitos(pedido.pagaCon))) + ")" : ""));
+    if (pedido.notas.trim()) l.push("Notas: " + pedido.notas.trim());
+    return l.join("\n");
+  }
+  window.__mensajePedido = mensaje;
+
+  $("enviar").addEventListener("click", () => {
+    actualizarEstado();
+    if (!estadoNegocio.abierto || faltaMinimo() > 0 || !cantidadTotal()) { pintarHoja(); return; }
+    if (!validar()) return;
+    pedido.enviado = true;
+    persistir();
+    pintarHoja();
+    window.location.href = "https://wa.me/" + soloDigitos(PEDIDOS.whatsapp) + "?text=" + encodeURIComponent(mensaje());
+  });
+
+  $("nuevoPedido").addEventListener("click", () => {
+    pedido.carrito = {}; pedido.notas = ""; pedido.pagaCon = ""; pedido.enviado = false;
+    $("fNotas").value = ""; $("fPagaCon").value = "";
+    persistir();
+    pintarTodo();
+    cerrarHoja();
+  });
+
+  alCambiarHorario = () => { if (hojaAbierta) pintarHoja(); };
+  pintarTodo();
 })();
 </script>
 </body>
